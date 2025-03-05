@@ -1,0 +1,35 @@
+---
+- hosts: all
+  become: true
+  tasks:
+
+    - name: Update apt cache (for Debian/Ubuntu)
+      apt: update_cache=yes
+      when: ansible_distribution in ['Debian', 'Ubuntu']
+
+    - name: Install Nginx (Debian/Ubuntu)
+      apt: name=nginx state=present
+      when: ansible_distribution in ['Debian', 'Ubuntu']
+
+    - name: Install Nginx (CentOS/RHEL)
+      yum: name=nginx state=present
+      when: ansible_distribution in ['CentOS', 'RedHat']
+
+    - name: Ensure Nginx is started and enabled
+      service: name=nginx state=started enabled=yes
+
+    - name: Create Nginx configuration file (example)
+      template:
+        src: nginx.conf.j2  # Template file on your Ansible control node
+        dest: /etc/nginx/nginx.conf # Destination on the target server
+      notify: Reload Nginx
+
+    - name: Create a virtual host configuration (example)
+      template:
+        src: virtual_host.conf.j2  # Template file for virtual host
+        dest: /etc/nginx/conf.d/my_website.com.conf # Destination
+      notify: Reload Nginx
+
+  handlers:
+    - name: Reload Nginx
+      service: name=nginx state=reloaded
