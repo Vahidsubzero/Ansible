@@ -1,0 +1,25 @@
+---
+- name: Add a new user
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create a new user
+      user:
+        name: myuser  
+        password: "{{ 'mypassword' | password_hash('sha512') }}" 
+        shell: /bin/bash  
+        home: /home/myuser 
+        groups: sudo  
+        state: present 
+
+    - name: Set authorized key for SSH access
+      authorized_key:
+        user: myuser
+        state: present
+        key: "{{ lookup('file', 'myuser_ssh_key.pub') }}"  
+
+    - name: Ensure the user has sudo privileges without password
+      copy:
+        content: "myuser ALL=(ALL) NOPASSWD:ALL"
+        dest: "/etc/sudoers.d/myuser"
+        mode: '0440'
